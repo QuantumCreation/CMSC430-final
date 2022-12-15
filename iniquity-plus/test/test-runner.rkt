@@ -10,8 +10,8 @@
 
 
 
-(check-equal? (run '(+ 1 2 3)
-                ) (cons 97 ""))
+(check-equal? (run '(values -1)
+                ) -1)
 
 ;   (check-equal? (run '(define f (case-lambda 
 ;                          [(a b c d e) (f a b c d)] 
@@ -84,219 +84,219 @@
 
   
 
-;   (check-equal? (run '(define (f a b c . xs) xs)
-;                      '(f 1 2))
-;                 'err)
+  (check-equal? (run '(define (f a b c . xs) xs)
+                     '(f 1 2))
+                'err)
 
-;   (check-equal? (run '(define (f a b c . xs) c)
-;                      '(f 1 2 3 4 5 6))
-;                 3)
+  (check-equal? (run '(define (f a b c . xs) c)
+                     '(f 1 2 3 4 5 6))
+                3)
 
-;   (check-equal? (run '(define (f a . xs) a)
-;                     '(f (+ (+ 5 3) 1) (+ 1 5) (+ 3 5)))
-;               9)
-
-
-;   (check-equal? (run
-;                  '(define (f x) x)
-;                  '(f 5))
-;                 5)
-
-; (check-equal? (run
-;                  '(define (f a b) (+ a b))
-;                  '(f 5))
-;                 'err)
-
-; (check-equal? (run '(define (f a . xs)
-;                         a)
-;                      '(f 1 2 3))
-;                 1)
-
-; (check-equal? (run '(define (f a b c . xs)
-;                         xs)
-;                      '(f 1 2 3 4 5))
-;                 '(4 5))
-
-; (check-equal? (run '(define (f a b c . xs)
-;                         (if (empty? xs) #t #f))
-;                      '(f 1 2 3))
-;                 #t)
+  (check-equal? (run '(define (f a . xs) a)
+                    '(f (+ (+ 5 3) 1) (+ 1 5) (+ 3 5)))
+              9)
 
 
-;   (check-equal? (run '(define f
-;                         (case-lambda
-;                           [(a b c d) c]
-;                           [(a b) (+ 9 b)]
-;                           [(a) a]))
-;                      '(f 1 5 3))
-;                 'err)
+  (check-equal? (run
+                 '(define (f x) x)
+                 '(f 5))
+                5)
 
-;     (check-equal? (run '(define f
-;                         (case-lambda
-;                           [(a b c d) c]
-;                           [(a b) (+ 9 b)]
-;                           [(a) a]))
-;                      '(f 1 5 3))
-;                 'err)
+(check-equal? (run
+                 '(define (f a b) (+ a b))
+                 '(f 5))
+                'err)
 
-;   (check-equal? (run '(define f
-;                         (case-lambda
-;                           [(a b c d) c]
-;                           [(a b) (+ 52 b)]
-;                           [x (car x)]))
-;                      '(f 9 5 3))
-;                 9)
+(check-equal? (run '(define (f a . xs)
+                        a)
+                     '(f 1 2 3))
+                1)
+
+(check-equal? (run '(define (f a b c . xs)
+                        xs)
+                     '(f 1 2 3 4 5))
+                '(4 5))
+
+(check-equal? (run '(define (f a b c . xs)
+                        (if (empty? xs) #t #f))
+                     '(f 1 2 3))
+                #t)
+
+
+  (check-equal? (run '(define f
+                        (case-lambda
+                          [(a b c d) c]
+                          [(a b) (+ 9 b)]
+                          [(a) a]))
+                     '(f 1 5 3))
+                'err)
+
+    (check-equal? (run '(define f
+                        (case-lambda
+                          [(a b c d) c]
+                          [(a b) (+ 9 b)]
+                          [(a) a]))
+                     '(f 1 5 3))
+                'err)
+
+  (check-equal? (run '(define f
+                        (case-lambda
+                          [(a b c d) c]
+                          [(a b) (+ 52 b)]
+                          [x (car x)]))
+                     '(f 9 5 3))
+                9)
   
-;   (check-equal? (run '(define (f a b . xs) xs)
-;                      '(apply f 1 2 (cons 3 (cons 4 (cons 5 '())))))
-;                 '(3 4 5))
+  (check-equal? (run '(define (f a b . xs) xs)
+                     '(apply f 1 2 (cons 3 (cons 4 (cons 5 '())))))
+                '(3 4 5))
 
 
-;   (check-equal? (run '(define (f a . xs) a)
-;                      '(apply f 1 2 (cons 3 4)))
-;                 1)
+  (check-equal? (run '(define (f a . xs) a)
+                     '(apply f 1 2 (cons 3 4)))
+                1)
 
 
-;    (check-equal? (run '(cons? (cons (cons 5 6) (cons 2 3))))
-;                 #t)
+   (check-equal? (run '(cons? (cons (cons 5 6) (cons 2 3))))
+                #t)
 
 
-;   ;; Abscond examples
-;   (check-equal? (run 7) 7)
-;   (check-equal? (run -8) -8)
+  ; ;; Abscond examples
+  ; (check-equal? (run 7) 7)
+  ; (check-equal? (run -8) -8)
 
-;   ;; Blackmail examples
-;   (check-equal? (run '(add1 (add1 7))) 9)
-;   (check-equal? (run '(add1 (sub1 7))) 7)
+  ; ;; Blackmail examples
+  ; (check-equal? (run '(add1 (add1 7))) 9)
+  ; (check-equal? (run '(add1 (sub1 7))) 7)
 
-;   ;; Con examples
-;   (check-equal? (run '(if (zero? 0) 1 2)) 1)
-;   (check-equal? (run '(if (zero? 1) 1 2)) 2)
-;   (check-equal? (run '(if (zero? -7) 1 2)) 2)
-;   (check-equal? (run '(if (zero? 0)
-;                           (if (zero? 1) 1 2)
-;                           7))
-;                 2)
-;   (check-equal? (run '(if (zero? (if (zero? 0) 1 0))
-;                           (if (zero? 1) 1 2)
-;                           7))
-;                 7)
+  ; ;; Con examples
+  ; (check-equal? (run '(if (zero? 0) 1 2)) 1)
+  ; (check-equal? (run '(if (zero? 1) 1 2)) 2)
+  ; (check-equal? (run '(if (zero? -7) 1 2)) 2)
+  ; (check-equal? (run '(if (zero? 0)
+  ;                         (if (zero? 1) 1 2)
+  ;                         7))
+  ;               2)
+  ; (check-equal? (run '(if (zero? (if (zero? 0) 1 0))
+  ;                         (if (zero? 1) 1 2)
+  ;                         7))
+  ;               7)
 
-;   ;; Dupe examples
-;   (check-equal? (run #t) #t)
-;   (check-equal? (run #f) #f)
-;   (check-equal? (run '(if #t 1 2)) 1)
-;   (check-equal? (run '(if #f 1 2)) 2)
-;   (check-equal? (run '(if 0 1 2)) 1)
-;   (check-equal? (run '(if #t 3 4)) 3)
-;   (check-equal? (run '(if #f 3 4)) 4)
-;   (check-equal? (run '(if  0 3 4)) 3)
-;   (check-equal? (run '(zero? 4)) #f)
-;   (check-equal? (run '(zero? 0)) #t)
+  ; ;; Dupe examples
+  ; (check-equal? (run #t) #t)
+  ; (check-equal? (run #f) #f)
+  ; (check-equal? (run '(if #t 1 2)) 1)
+  ; (check-equal? (run '(if #f 1 2)) 2)
+  ; (check-equal? (run '(if 0 1 2)) 1)
+  ; (check-equal? (run '(if #t 3 4)) 3)
+  ; (check-equal? (run '(if #f 3 4)) 4)
+  ; (check-equal? (run '(if  0 3 4)) 3)
+  ; (check-equal? (run '(zero? 4)) #f)
+  ; (check-equal? (run '(zero? 0)) #t)
 
-;   ;; Dodger examples
-;   (check-equal? (run #\a) #\a)
-;   (check-equal? (run #\b) #\b)
-;   (check-equal? (run '(char? #\a)) #t)
-;   (check-equal? (run '(char? #t)) #f)
-;   (check-equal? (run '(char? 8)) #f)
-;   (check-equal? (run '(char->integer #\a)) (char->integer #\a))
-;   (check-equal? (run '(integer->char 955)) #\λ)
+  ; ;; Dodger examples
+  ; (check-equal? (run #\a) #\a)
+  ; (check-equal? (run #\b) #\b)
+  ; (check-equal? (run '(char? #\a)) #t)
+  ; (check-equal? (run '(char? #t)) #f)
+  ; (check-equal? (run '(char? 8)) #f)
+  ; (check-equal? (run '(char->integer #\a)) (char->integer #\a))
+  ; (check-equal? (run '(integer->char 955)) #\λ)
 
-;   ;; Extort examples
-;   (check-equal? (run '(add1 #f)) 'err)
-;   (check-equal? (run '(sub1 #f)) 'err)
-;   (check-equal? (run '(zero? #f)) 'err)
-;   (check-equal? (run '(char->integer #f)) 'err)
-;   (check-equal? (run '(integer->char #f)) 'err)
-;   (check-equal? (run '(integer->char -1)) 'err)
-;   (check-equal? (run '(write-byte #f)) 'err)
-;   (check-equal? (run '(write-byte -1)) 'err)
-;   (check-equal? (run '(write-byte 256)) 'err)
+  ; ;; Extort examples
+  ; (check-equal? (run '(add1 #f)) 'err)
+  ; (check-equal? (run '(sub1 #f)) 'err)
+  ; (check-equal? (run '(zero? #f)) 'err)
+  ; (check-equal? (run '(char->integer #f)) 'err)
+  ; (check-equal? (run '(integer->char #f)) 'err)
+  ; (check-equal? (run '(integer->char -1)) 'err)
+  ; (check-equal? (run '(write-byte #f)) 'err)
+  ; (check-equal? (run '(write-byte -1)) 'err)
+  ; (check-equal? (run '(write-byte 256)) 'err)
 
-;   ;; Fraud examples
-;   (check-equal? (run '(let ((x 7)) x)) 7)
-;   (check-equal? (run '(let ((x 7)) 2)) 2)
-;   (check-equal? (run '(let ((x 7)) (add1 x))) 8)
-;   (check-equal? (run '(let ((x (add1 7))) x)) 8)
-;   (check-equal? (run '(let ((x 7)) (let ((y 2)) x))) 7)
-;   (check-equal? (run '(let ((x 7)) (let ((x 2)) x))) 2)
-;   (check-equal? (run '(let ((x 7)) (let ((x (add1 x))) x))) 8)
+  ; ;; Fraud examples
+  ; (check-equal? (run '(let ((x 7)) x)) 7)
+  ; (check-equal? (run '(let ((x 7)) 2)) 2)
+  ; (check-equal? (run '(let ((x 7)) (add1 x))) 8)
+  ; (check-equal? (run '(let ((x (add1 7))) x)) 8)
+  ; (check-equal? (run '(let ((x 7)) (let ((y 2)) x))) 7)
+  ; (check-equal? (run '(let ((x 7)) (let ((x 2)) x))) 2)
+  ; (check-equal? (run '(let ((x 7)) (let ((x (add1 x))) x))) 8)
 
-;   (check-equal? (run '(let ((x 0))
-;                         (if (zero? x) 7 8)))
-;                 7)
-;   (check-equal? (run '(let ((x 1))
-;                         (add1 (if (zero? x) 7 8))))
-;                 9)
-;   (check-equal? (run '(+ 3 4)) 7)
-;   (check-equal? (run '(- 3 4)) -1)
-;   (check-equal? (run '(+ (+ 2 1) 4)) 7)
-;   (check-equal? (run '(+ (+ 2 1) (+ 2 2))) 7)
-;   (check-equal? (run '(let ((x (+ 1 2)))
-;                         (let ((z (- 4 x)))
-;                           (+ (+ x x) z))))
-;                 7)
-;   (check-equal? (run '(= 5 5)) #t)
-;   (check-equal? (run '(= 4 5)) #f)
-;   (check-equal? (run '(= (add1 4) 5)) #t)
-;   (check-equal? (run '(< 5 5)) #f)
-;   (check-equal? (run '(< 4 5)) #t)
-;   (check-equal? (run '(< (add1 4) 5)) #f)
+  ; (check-equal? (run '(let ((x 0))
+  ;                       (if (zero? x) 7 8)))
+  ;               7)
+  ; (check-equal? (run '(let ((x 1))
+  ;                       (add1 (if (zero? x) 7 8))))
+  ;               9)
+  ; (check-equal? (run '(+ 3 4)) 7)
+  ; (check-equal? (run '(- 3 4)) -1)
+  ; (check-equal? (run '(+ (+ 2 1) 4)) 7)
+  ; (check-equal? (run '(+ (+ 2 1) (+ 2 2))) 7)
+  ; (check-equal? (run '(let ((x (+ 1 2)))
+  ;                       (let ((z (- 4 x)))
+  ;                         (+ (+ x x) z))))
+  ;               7)
+  ; (check-equal? (run '(= 5 5)) #t)
+  ; (check-equal? (run '(= 4 5)) #f)
+  ; (check-equal? (run '(= (add1 4) 5)) #t)
+  ; (check-equal? (run '(< 5 5)) #f)
+  ; (check-equal? (run '(< 4 5)) #t)
+  ; (check-equal? (run '(< (add1 4) 5)) #f)
 
-;   ;; Hustle examples
-;   (check-equal? (run ''()) '())
-;   (check-equal? (run '(box 1)) (box 1))
-;   (check-equal? (run '(cons 1 2)) (cons 1 2))
-;   (check-equal? (run '(unbox (box 1))) 1)
-;   (check-equal? (run '(car (cons 1 2))) 1)
-;   (check-equal? (run '(cdr (cons 1 2))) 2)
-;   (check-equal? (run '(cons 1 '())) (list 1))
-;   (check-equal? (run '(let ((x (cons 1 2)))
-;                         (begin (cdr x)
-;                                (car x))))
-;                 1)
-;   (check-equal? (run '(let ((x (cons 1 2)))
-;                         (let ((y (box 3)))
-;                           (unbox y))))
-;                 3)
+  ; ;; Hustle examples
+  ; (check-equal? (run ''()) '())
+  ; (check-equal? (run '(box 1)) (box 1))
+  ; (check-equal? (run '(cons 1 2)) (cons 1 2))
+  ; (check-equal? (run '(unbox (box 1))) 1)
+  ; (check-equal? (run '(car (cons 1 2))) 1)
+  ; (check-equal? (run '(cdr (cons 1 2))) 2)
+  ; (check-equal? (run '(cons 1 '())) (list 1))
+  ; (check-equal? (run '(let ((x (cons 1 2)))
+  ;                       (begin (cdr x)
+  ;                              (car x))))
+  ;               1)
+  ; (check-equal? (run '(let ((x (cons 1 2)))
+  ;                       (let ((y (box 3)))
+  ;                         (unbox y))))
+  ;               3)
 
-;   ;; Hoax examples
-;   (check-equal? (run '(make-vector 0 0)) #())
-;   (check-equal? (run '(make-vector 1 0)) #(0))
-;   (check-equal? (run '(make-vector 3 0)) #(0 0 0))
-;   (check-equal? (run '(make-vector 3 5)) #(5 5 5))
-;   (check-equal? (run '(vector? (make-vector 0 0))) #t)
-;   (check-equal? (run '(vector? (cons 0 0))) #f)
-;   (check-equal? (run '(vector-ref (make-vector 3 5) -1)) 'err)
-;   (check-equal? (run '(vector-ref (make-vector 3 5) 0)) 5)
-;   (check-equal? (run '(vector-ref (make-vector 3 5) 1)) 5)
-;   (check-equal? (run '(vector-ref (make-vector 3 5) 2)) 5)
-;   (check-equal? (run '(vector-ref (make-vector 3 5) 3)) 'err)
-;   (check-equal? (run '(let ((x (make-vector 3 5)))
-;                         (begin (vector-set! x 0 4)
-;                                x)))
-;                 #(4 5 5))
-;   (check-equal? (run '(let ((x (make-vector 3 5)))
-;                         (begin (vector-set! x 1 4)
-;                                x)))
-;                 #(5 4 5))
-;   (check-equal? (run '(vector-length (make-vector 3 #f))) 3)
-;   (check-equal? (run '(vector-length (make-vector 0 #f))) 0)
-;   (check-equal? (run '"") "")
-;   (check-equal? (run '"fred") "fred")
-;   (check-equal? (run '"wilma") "wilma")
-;   (check-equal? (run '(make-string 0 #\f)) "")
-;   (check-equal? (run '(make-string 3 #\f)) "fff")
-;   (check-equal? (run '(make-string 3 #\g)) "ggg")
-;   (check-equal? (run '(string-length "")) 0)
-;   (check-equal? (run '(string-length "fred")) 4)
-;   (check-equal? (run '(string-ref "fred" 0)) #\f)
-;   (check-equal? (run '(string-ref "fred" 1)) #\r)
-;   (check-equal? (run '(string-ref "fred" 2)) #\e)
-;   (check-equal? (run '(string-ref "fred" 4)) 'err)
-;   (check-equal? (run '(string? "fred")) #t)
-;   (check-equal? (run '(string? (cons 1 2))) #f)
+  ; ;; Hoax examples
+  (check-equal? (run '(make-vector 0 0)) #())
+  (check-equal? (run '(make-vector 1 0)) #(0))
+  (check-equal? (run '(make-vector 3 0)) #(0 0 0))
+  (check-equal? (run '(make-vector 3 5)) #(5 5 5))
+  (check-equal? (run '(vector? (make-vector 0 0))) #t)
+  (check-equal? (run '(vector? (cons 0 0))) #f)
+  (check-equal? (run '(vector-ref (make-vector 3 5) -1)) 'err)
+  (check-equal? (run '(vector-ref (make-vector 3 5) 0)) 5)
+  (check-equal? (run '(vector-ref (make-vector 3 5) 1)) 5)
+  (check-equal? (run '(vector-ref (make-vector 3 5) 2)) 5)
+  (check-equal? (run '(vector-ref (make-vector 3 5) 3)) 'err)
+  (check-equal? (run '(let ((x (make-vector 3 5)))
+                        (begin (vector-set! x 0 4)
+                               x)))
+                #(4 5 5))
+  (check-equal? (run '(let ((x (make-vector 3 5)))
+                        (begin (vector-set! x 1 4)
+                               x)))
+                #(5 4 5))
+  (check-equal? (run '(vector-length (make-vector 3 #f))) 3)
+  (check-equal? (run '(vector-length (make-vector 0 #f))) 0)
+  (check-equal? (run '"") "")
+  (check-equal? (run '"fred") "fred")
+  (check-equal? (run '"wilma") "wilma")
+  (check-equal? (run '(make-string 0 #\f)) "")
+  ; (check-equal? (run '(make-string 3 #\f)) "fff")
+  ; (check-equal? (run '(make-string 3 #\g)) "ggg")
+  ; (check-equal? (run '(string-length "")) 0)
+  ; (check-equal? (run '(string-length "fred")) 4)
+  ; (check-equal? (run '(string-ref "fred" 0)) #\f)
+  ; (check-equal? (run '(string-ref "fred" 1)) #\r)
+  ; (check-equal? (run '(string-ref "fred" 2)) #\e)
+  ; (check-equal? (run '(string-ref "fred" 4)) 'err)
+  ; (check-equal? (run '(string? "fred")) #t)
+  ; (check-equal? (run '(string? (cons 1 2))) #f)
 
 ;   ;; Iniquity tests
 ;   (check-equal? (run

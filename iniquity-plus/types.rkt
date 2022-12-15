@@ -28,7 +28,11 @@
 
 (define (bits->value b)
   (cond [(= type-int (bitwise-and b mask-int))
-         (arithmetic-shift b (- int-shift))]
+          (if (<= b (expt 2 63))
+          (arithmetic-shift b (- int-shift))
+          (arithmetic-shift (- b (expt 2 64)) (- int-shift))
+          )
+         ]
         [(= type-char (bitwise-and b mask-char))
          (integer->char (arithmetic-shift b (- char-shift)))]
         [(= b val-true)  #t]

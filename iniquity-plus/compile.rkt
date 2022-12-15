@@ -8,9 +8,9 @@
 (define rsp 'rsp) ; stack
 (define rdi 'rdi) ; arg
 (define r11 'r11) ; Return Values Count
-(define r12 'r12) ; Whatever ;)
+(define r12 'r12) ; arity
 (define r13 'r13) ; arity
-(define r14 'r14) ; arity
+(define r14 'r14) ; Scratch for Creating Vectors
 (define r15 'r15) ; arity
 
 
@@ -24,21 +24,49 @@
            (Global 'entry)
            (Label 'entry)
            (Mov rbx rdi) ; recv heap pointer
-          ;  (compile-e e '())
+           (compile-e e '())
 
-            (Mov rax (imm->bits 69))
-            (Push rax)
-            (Mov rax (imm->bits 720))
+
+            
+
+            ; (Mov rax (imm->bits 69))
             ; (Push rax)
-            ; (Mov rax (imm->bits 73220))
-            (compile-op2 'values)
+            
+            ; (Mov rax (imm->bits 720))
+            ; (Push rax)
+            
+            ; (Mov rax (imm->bits 727))
+            ; (Push rax)
+            ; (Mov rax val-empty)
+            
+            
+            ; (compile-op2 'values)
+            ; (compile-op2 'values)
+            ; (compile-op1 'car-values)
 
-            (Mov r8 1)
-            (Mov (Offset rbx 0) r8)  ; write size of vector, 1
-            (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
+
+            ; (Mov r12 1)
+            ; (Mov (Offset rbx 0) r12)  ; write size of vector, 1
+            ; (Mov rax val-empty)
+            ; (Mov r14 rax)
+            ; (compile-op1 'car-values)
+            ; (Mov rax (imm->bits 1152921504606846978))
+            ; (Mov rax (imm->bits -1))
+            ; (Mov rax (imm->bits 9223372036854775808))
+            
+            ; (Sub rax r9)
+            ; (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
+            ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
+            ; (Mov rax r14)
+            ; (compile-op1 'cdr-values)
+            ; (compile-op1 'car-values)
+            ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
+          
             ; (Cmp r11 2)
             ; (Jg 'raise_error_align)
-            ; (create-vector)
+            ; (Cmp r11 1)
+            ; (Je 'raise_error_align)
+            (create-vector)
             ; (Mov r8 r11)
             ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
 
@@ -50,15 +78,15 @@
             ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
             ; (Pop rax)
             ; (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
-
-
+        
             (Mov rax rbx) ; return the pointer to the vector
 
            (Ret)
            (compile-defines ds)
            (Label 'raise_error_align)
            (Or rsp 8)
-           (Jmp 'raise_error))]))
+           (Jmp 'raise_error)
+           )]))
 
 
 (define (compile-mult-r11-rax)
@@ -78,53 +106,99 @@
         (Label l2)
   )
 )
-
 )
+
+
+
+(define (countdown-rbx-by-r11)
+
+(let (  (l1 (gensym 'countdown))
+        (l2 (gensym 'countdown)))
+  (seq  
+  
+        (Mov rax r11)
+
+        ; Start loop
+        (Label l1)
+        (Cmp rax 0)
+        (Jle l2)
+
+        (Sub rbx 8)
+        (Sub rax 1)
+        (Jmp l1)
+
+        (Label l2)
+  )
+)
+)
+
+; Beware of bashing on r8
 
 (define (create-vector)
   (let ((l1 (gensym 'vector))
       (l2 (gensym 'vector))
-      (l3 (gensym 'vector)))
+      (l3 (gensym 'vector))
+      (l4 (gensym 'vector)))
     (seq 
+      
       ; If we have no values being returned, go to the end immediately
       (Cmp r11 0)
-      (Jle l3)
 
-      ; Saves the last value that was calculated to the stack
-      (Push rax)
-
-      ; Move the r11 registor holding the number of return values to r8
+      ; Move the r11 register holding the number of return values to r8
       (Mov r8 r11)
       (Mov (Offset rbx 0) r8)  ; write size of vector, 1
-
-      (compile-mult-r11-rax) ;r11 is now multiplied by 8 at placed into rax
-      (Add rbx rax) ; Move the multiplied number to rbx on the heap
-
-      ; If we have no values being returned, go to the end immediately
-      (Cmp r8 0)
       (Jle l2)
+
+      ; ; Saves the last value that was calculated to the stack
+      ; (Push rax)
+
       
+     
+      ; If we only have one value, add just that one value
+      (Cmp r11 1)
+      (Je l3)
+
+
       ; Loop start
       (Label l1)
-      ; Get the value from the stack
-      (Pop rax)
+      ; If we are here, we have at least 2 return values
+      
+      ; Count down the number of return values
+      (Sub r8 1)
+      ; Count up where we are putting the multiple return values into the vector
+      (Add rbx 8)
+
+
+      ; Save the current address of the list of return values
+      (Mov r14 rax)
+
+      ; Get the first value
+      (compile-op1 'car-values)
       ; Write the value to the vector
       (Mov (Offset rbx 0) rax) ; write rax as single element of vector()
-
       
-      ; Move the rbx  pointer down and count down the number of return values
-      (Sub rbx 8)
-      (Sub r8 1)
-      ;If we are out of return values, keep going to the end
+      
+      ;If we are out of return values, go to the end
       (Cmp r8 0)
-      (Jg l1)
-      (Jmp l2)
+      (Jle l2)
 
-      (Label l3)
+      ; Get the original list again, and then grab everything but the first value
+      (Mov rax r14)
+      (compile-op1 'cdr-values)
 
-
+      ; Go back to the start of the loop
+      (Jmp l1)
       
+
+      ; In the case that there is only a single value, we won't have a values list so 
+      ; just add that single value to the vector
+      (Label l3)
+      (Add rbx 8)
+      (Mov (Offset rbx 0) rax)
+
+
       (Label l2)
+      (countdown-rbx-by-r11)
       (Mov rax rbx) ; return the pointer to the vector
     ))
 )
@@ -298,69 +372,88 @@
   )
 )
 
+
+(define (check-number-of-return-values)
+(let ((l1 (gensym 'check)))
+      (seq (Cmp r11 1)
+            (Jne 'raise_error_align))
+  )
+
+
+
+)
+
 ;; Expr CEnv -> Asm
 (define (compile-e e c)
 ; (display e)
-
+; Maybe check for multiple return values inside here?
   (match e
-    [(Int i)            (seq (Mov r11 1) (compile-value i)) ]
-    [(Bool b)           (seq (Mov r11 1) (compile-value b)) ]
-    [(Char c)           (seq (Mov r11 1) (compile-value c)) ]
-    [(Eof)              (seq (Mov r11 1) (compile-value eof)) ]
-    [(Empty)            (seq (Mov r11 1) (compile-value '())) ]
-    [(Var x)            (seq (Mov r11 1) (compile-variable x c)) ]
-    [(Str s)            (seq (Mov r11 1) (compile-string s)) ]
-    [(Prim0 p)          (seq (Mov r11 1) (compile-prim0 p c)) ]
-    [(Prim1 p e)        (seq (Mov r11 1) (compile-prim1 p e c)) ]
-    [(Prim2 p e1 e2)    (seq (Mov r11 1) (compile-prim2 p e1 e2 c)) ]
-    [(Prim3 p e1 e2 e3) (seq (Mov r11 1) (compile-prim3 p e1 e2 e3 c)) ]
-    [(If e1 e2 e3)      (seq (Mov r11 1) (compile-if e1 e2 e3 c)) ]
-    [(Begin e1 e2)      (seq (Mov r11 1) (compile-begin e1 e2 c)) ]
-    [(Let x e1 e2)      (seq (Mov r11 1) (compile-let x e1 e2 c)) ]
+    [(Int i)            (seq (Mov r11 1) (compile-value i) (check-number-of-return-values)) ]
+    [(Bool b)           (seq (Mov r11 1) (compile-value b) (check-number-of-return-values)) ]
+    [(Char c)           (seq (Mov r11 1) (compile-value c) (check-number-of-return-values)) ]
+    [(Eof)              (seq (Mov r11 1) (compile-value eof) (check-number-of-return-values)) ]
+    [(Empty)            (seq (Mov r11 1) (compile-value '()) (check-number-of-return-values)) ]
+    [(Var x)            (seq (Mov r11 1) (compile-variable x c) (check-number-of-return-values)) ]
+    [(Str s)            (seq (Mov r11 1) (compile-string s) (check-number-of-return-values)) ]
+    [(Prim0 p)          (seq (Mov r11 1) (compile-prim0 p c) (check-number-of-return-values)) ]
+    [(Prim1 p e)        (seq (Mov r11 1) (compile-prim1 p e c) (check-number-of-return-values)) ]
+    [(Prim2 p e1 e2)    (seq (Mov r11 1) (compile-prim2 p e1 e2 c) (check-number-of-return-values)) ]
+    [(Prim3 p e1 e2 e3) (seq (Mov r11 1) (compile-prim3 p e1 e2 e3 c) (check-number-of-return-values)) ]
+    [(If e1 e2 e3)      (seq (Mov r11 1) (compile-if e1 e2 e3 c) (check-number-of-return-values)) ]
+    [(Begin e1 e2)      (seq (Mov r11 1) (compile-begin e1 e2 c) (check-number-of-return-values)) ]
+    [(Let x e1 e2)      (seq (Mov r11 1) (compile-let x e1 e2 c) (check-number-of-return-values)) ]
 
     [(Values vs)        (seq (Mov r11 0) (compile-values-first vs c)) ]
 
-    [(App f es)         (seq (Mov r11 2) (compile-app f es c)) ]
+    [(App f es)         (seq (Mov r11 1) (compile-app f es c)) ]
     [(Apply f es e)     (seq (Mov r11 1) (compile-apply f es e c)) ]))
 
 
 
 (define (compile-values-first vs c)
-(match vs
-['() '()]
-[stuff  (seq 
-          (Mov r11 0)
-          (compile-values stuff c))]
-)
+  (match vs
+  ['() (seq (Mov r11 0))]
+  [(cons e '()) (seq  
+                      (compile-e e c)
+                      (Cmp r11 1)
+                      (Jne 'raise_error_align)
+                      (Mov r11 1)
+                      )]
+  [(cons e rest) (seq  
+                      (compile-e e c)
+                      (Cmp r11 1)
+                      (Jne 'raise_error_align)
+                      (Push rax)
+                      ; (Mov rax val-empty)
+                      ; (Push rax)
+                      (compile-values rest c)
+                      
+                      (Add r11 1)
+
+                      )]
+  ; [_ (seq (Jmp 'raise_error_align))]
+  )
 )
 
 
 (define (compile-values vs c)
 (match vs
-['() (seq (Mov r11 0))]
-; Dont push when theres only the last value left. This makes (values 1) act as just 1
-; and it prevents stack issues later on
-; [(cons e '()) (seq 
-;                     (compile-e e c)
-;                     (Cmp r11 1)
-;                     (Jne 'raise_error_align)
-
-
-;                     (Mov r11 1)
-;                     )]
+['() (seq (Mov r11 0)
+          (Mov rax val-empty)
+          (compile-op2 'values))]
 [(cons e rest) (seq  
-          
                     (compile-e e c)
                     (Cmp r11 1)
                     (Jne 'raise_error_align)
-
-
+                    ; (Pop r8)
                     (Push rax)
-                    
+                    ; (Mov rax r8)
+                    ; (Mov rax val-empty)
+                                      
                     (compile-values rest c)
+                    (compile-op2 'values)
                     (Add r11 1)
                     )]
-
 [_ (seq (Jmp 'raise_error_align))]
 )
 )

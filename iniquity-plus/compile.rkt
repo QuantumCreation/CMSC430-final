@@ -24,13 +24,21 @@
            (Global 'entry)
            (Label 'entry)
            (Mov rbx rdi) ; recv heap pointer
-           (compile-e e '())
+          ;  (compile-e e '())
 
-            ; (Mov r8 1)
-            ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
-            (Cmp r11 2)
-            (Jg 'raise_error_align)
-            (create-vector)
+            (Mov rax (imm->bits 69))
+            (Push rax)
+            (Mov rax (imm->bits 720))
+            ; (Push rax)
+            ; (Mov rax (imm->bits 73220))
+            (compile-op2 'values)
+
+            (Mov r8 1)
+            (Mov (Offset rbx 0) r8)  ; write size of vector, 1
+            (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
+            ; (Cmp r11 2)
+            ; (Jg 'raise_error_align)
+            ; (create-vector)
             ; (Mov r8 r11)
             ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
 
@@ -44,7 +52,7 @@
             ; (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
 
 
-            ; (Mov rax rbx) ; return the pointer to the vector
+            (Mov rax rbx) ; return the pointer to the vector
 
            (Ret)
            (compile-defines ds)
@@ -154,7 +162,7 @@
           
           (compile-e e (reverse xs))
           (Add rsp (* 8 (length xs)))
-          
+
           (Ret))]
     ; TODO: handle other kinds of functions
     [(FunRest xs lst e)
@@ -332,19 +340,21 @@
 ['() (seq (Mov r11 0))]
 ; Dont push when theres only the last value left. This makes (values 1) act as just 1
 ; and it prevents stack issues later on
-[(cons e '()) (seq 
-                    (compile-e e c)
-                    (Cmp r11 1)
-                    (Jne 'raise_error_align)
+; [(cons e '()) (seq 
+;                     (compile-e e c)
+;                     (Cmp r11 1)
+;                     (Jne 'raise_error_align)
 
 
-                    (Mov r11 1)
-                    )]
+;                     (Mov r11 1)
+;                     )]
 [(cons e rest) (seq  
           
                     (compile-e e c)
                     (Cmp r11 1)
                     (Jne 'raise_error_align)
+
+
                     (Push rax)
                     
                     (compile-values rest c)

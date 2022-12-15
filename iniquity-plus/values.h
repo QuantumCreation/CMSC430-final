@@ -18,6 +18,8 @@ typedef enum type_t {
   /* pointers */
   T_BOX,
   T_CONS,
+  // ***************************************************************
+  T_VALUES,
   T_VECT,
   T_STR,
 } type_t;
@@ -30,6 +32,15 @@ typedef struct val_cons_t {
   val_t snd;
   val_t fst;
 } val_cons_t;
+
+// ******************************************************************
+// Values
+typedef struct val_values_t {
+  val_t snd;
+  val_t fst;
+} val_values_t;
+
+
 typedef struct val_vect_t {
   uint64_t len;
   val_t elems[];
@@ -65,6 +76,10 @@ val_t val_wrap_box(val_box_t* b);
 
 val_cons_t* val_unwrap_cons(val_t x);
 val_t val_wrap_cons(val_cons_t* c);
+
+// Values
+val_values_t* val_unwrap_values(val_t x);
+val_t val_wrap_values(val_values_t* c);
 
 val_vect_t* val_unwrap_vect(val_t x);
 val_t val_wrap_vect(val_vect_t* c);

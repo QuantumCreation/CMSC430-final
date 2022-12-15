@@ -8,6 +8,10 @@ type_t val_typeof(val_t x)
     return T_BOX;
   case cons_type_tag:
     return T_CONS;
+    // VALUES **************************************************************
+  case values_type_tag:
+    return T_VALUES;
+    
   case vect_type_tag:
     return T_VECT;
   case str_type_tag:
@@ -88,6 +92,18 @@ val_t val_wrap_cons(val_cons_t *c)
 {
   return ((val_t)c) | cons_type_tag;
 }
+// ****************************************************************
+// VALUES VARIATION FOR CONS
+val_values_t* val_unwrap_values(val_t x)
+{
+  return (val_values_t *)(x ^ values_type_tag);
+}
+val_t val_wrap_values(val_values_t *c)
+{
+  return ((val_t)c) | values_type_tag;
+}
+
+
 
 val_vect_t* val_unwrap_vect(val_t x)
 {

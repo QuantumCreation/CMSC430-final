@@ -67,15 +67,35 @@
      (seq (assert-cons rax)
           (Xor rax type-cons)
           (Mov rax (Offset rax 8)))]
+    ; ************************************************************
+    ; car for values
+    ['car-values
+     (seq (assert-values rax)
+          (Xor rax type-values)
+          (Mov rax (Offset rax 8)))]
+
     ['cdr
      (seq (assert-cons rax)
           (Xor rax type-cons)
           (Mov rax (Offset rax 0)))]
+; ************************************************************
+      ; Cdr for values
+    ['cdr-values
+     (seq (assert-values rax)
+          (Xor rax type-values)
+          (Mov rax (Offset rax 0)))]
+    
     ['empty? (eq-imm '())]
     ['box?
      (type-pred ptr-mask type-box)]
     ['cons?
      (type-pred ptr-mask type-cons)]
+
+    ; ************************************************************
+      ; Assert it is the values type
+    ['values?
+     (type-pred ptr-mask type-values)]
+
     ['vector?
      (type-pred ptr-mask type-vect)]
     ['string?
@@ -140,7 +160,7 @@
           (let ((true (gensym)))
             (seq (Je true)
                  (Mov rax val-false)
-                 (Label true))))]    
+                 (Label true))))]
     ['cons
      (seq (Mov (Offset rbx 0) rax)
           (Pop rax)
@@ -148,6 +168,17 @@
           (Mov rax rbx)
           (Or rax type-cons)
           (Add rbx 16))]
+; ************************************************************
+    ; New cons for values
+    ['values
+     (seq (Mov (Offset rbx 0) rax)
+          (Pop rax)
+          (Mov (Offset rbx 8) rax)
+          (Mov rax rbx)
+          (Or rax type-values)
+          (Add rbx 16))]
+
+
     ['make-vector
      (let ((loop (gensym))
            (done (gensym))
@@ -297,6 +328,12 @@
   (assert-type ptr-mask type-box))
 (define assert-cons
   (assert-type ptr-mask type-cons))
+  
+; ************************************************************
+; Assert values-cons
+(define assert-values
+  (assert-type ptr-mask type-values))
+
 (define assert-vector
   (assert-type ptr-mask type-vect))
 (define assert-string

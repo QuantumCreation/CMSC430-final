@@ -23,6 +23,12 @@
     [(? cons-bits? i)
      (cons (unload-value (heap-ref (+ i 8)))
            (unload-value (heap-ref i)))]
+    ; VALUES ***************************************************************************
+    [(? values-bits? i)
+     (cons (unload-value (heap-ref (+ i 8)))
+           (unload-value (heap-ref i)))]
+
+
     [(? vect-bits? i)
      (if (zero? (untag i))
          (vector)

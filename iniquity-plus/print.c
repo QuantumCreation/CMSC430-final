@@ -5,6 +5,12 @@
 void print_char(val_char_t);
 void print_codepoint(val_char_t);
 void print_cons(val_cons_t *);
+
+
+// **************************************************************
+void print_values(val_values_t *);
+
+
 void print_vect(val_vect_t*);
 void print_str(val_str_t*);
 void print_str_char(val_char_t);
@@ -31,6 +37,9 @@ void print_result(val_t x)
   case T_EMPTY:
   case T_BOX:
   case T_CONS:
+  // **************************************************************
+  case T_VALUES:
+  
   case T_VECT:    
     printf("'");
     print_result_interior(x);
@@ -58,6 +67,12 @@ void print_result_interior(val_t x)
   case T_CONS:
     printf("(");
     print_cons(val_unwrap_cons(x));
+    printf(")");
+    break;
+    // VALUES **************************************************************************
+  case T_VALUES:
+    printf("(");
+    print_values(val_unwrap_values(x));
     printf(")");
     break;
   case T_VECT:
@@ -102,6 +117,26 @@ void print_cons(val_cons_t *cons)
     break;
   }
 }
+
+void print_values(val_values_t *values)
+{
+  print_result_interior(values->fst);
+
+  switch (val_typeof(values->snd)) {
+  case T_EMPTY:
+    // nothing
+    break;
+  case T_VALUES:
+    printf(" ");
+    print_values(val_unwrap_values(values->snd));
+    break;
+  default:
+    printf(" . ");
+    print_result_interior(values->snd);
+    break;
+  }
+}
+
 
 void print_str(val_str_t* s)
 {

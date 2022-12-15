@@ -6,6 +6,12 @@
 (define ptr-mask       #b111)
 (define type-box       #b001)
 (define type-cons      #b010)
+
+; ************************************************************
+; Values type
+(define type-values     #b110)
+
+
 (define type-vect      #b011)
 (define type-str       #b100)
 (define int-shift  (+ 1 imm-shift))
@@ -55,6 +61,11 @@
 
 (define (cons-bits? v)
   (zero? (bitwise-xor (bitwise-and v imm-mask) type-cons)))
+
+; VALUES OBJECT
+; ******************************************************************************
+(define (values-bits? v)
+  (zero? (bitwise-xor (bitwise-and v imm-mask) type-values)))
 
 (define (box-bits? v)
   (zero? (bitwise-xor (bitwise-and v imm-mask) type-box)))

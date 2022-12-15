@@ -27,7 +27,6 @@ int main(int argc, char** argv)
   error_handler = &error_exit;
   heap = malloc(8 * heap_size);
 
-  val_t result;
 
   val_vect_t *result = entry(heap);
   for (int i = 0; i < result->len; ++i) {

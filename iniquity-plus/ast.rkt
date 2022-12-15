@@ -62,3 +62,7 @@
 (struct Var   (x)          #:prefab)
 (struct App   (f es)       #:prefab)
 (struct Apply (f es e)     #:prefab)
+
+(struct Values (vs)         #:prefab)
+(struct LetValues (es e)    #:prefab)
+

@@ -35,7 +35,7 @@
     [(Char c) c]
     [(Eof)    eof]
     [(Empty)  '()]
-    [(Var x)  (lookup r x)]
+    [(Var x)  (display x) (display (symbol? x)) (lookup r x)]
     [(Str s)  (string-copy s)]
     [(Prim0 'void) (void)]
     [(Prim0 'read-byte) (read-byte)]
@@ -73,6 +73,19 @@
      (match (interp-env e1 r ds)
        ['err 'err]
        [v (interp-env e2 (ext r x v) ds)])]
+
+    [(Values vs)
+     (match (interp-list vs r ds)
+      ['err 'err]
+      [v (apply values v)]     
+     )]
+
+    ; [(LetValues es expression)
+    ;   ; (let-values ([(x y) (values 1 2)]) 1)
+    ; ;  (let-values (interp-let-values es r ds) (interp-env expression r ds))
+    ;  (let-values (interp-let-values es r ds) (interp-env expression r ds))
+    ;  ]
+
     [(App f es)
      (match (interp-env* es r ds)
        ['err 'err]
@@ -92,6 +105,44 @@
                  [(Defn _ fun)
                   (apply-fun fun (append vs ws) ds)])
                'err)])])]))
+
+
+
+(define (interp-list-to-symbols es)
+(match es
+['() '()]
+[(cons (Var v) rest) (cons v (interp-list-to-symbols rest))]
+[_ 'err]
+)
+)
+
+(define (interp-let-values vs r ds)
+(match vs
+['() '()]
+[(cons (list vars vals) rest) 
+        (match (interp-list-to-symbols vars r ds)
+          ['err 'err]
+          [a (match (interp-env vals r ds)
+              ['err 'err]
+              [b (cons (a b) (interp-let-values rest r ds))]
+            )
+  ])
+]
+[_ 'err]
+)
+)
+
+(define (interp-list vs r ds)
+(match vs
+['() '()]
+[(cons v rest) 
+          (match (interp-env v r ds)
+            ['err 'err]
+            [v (cons v (interp-list rest r ds))])
+]
+[_ 'err]
+)
+)
 
 ;; Fun [Listof Values] Defns -> Answer
 (define (apply-fun f vs ds)

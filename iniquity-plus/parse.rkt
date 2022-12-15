@@ -86,9 +86,31 @@
      (Let x (parse-e e1) (parse-e e2))]
     [(list-rest 'apply (? symbol? f) es)
      (parse-apply f es)]
+    [(cons 'values es)
+    (Values (parse-list es))
+    ]
+    [(list 'let-values es e)
+    (LetValues (parse-let-values es) (parse-e e))
+    ]
+
     [(cons (? symbol? f) es)
      (App f (map parse-e es))]
     [_ (error "Parse error" s)]))
+
+
+(define (parse-let-values es)
+    (match es
+    ['() '()]
+    [(cons (list vars vals) rest) (cons (list (parse-list vars) (parse-e vals)) (parse-let-values rest))]
+    )
+)
+
+(define (parse-list es)
+    (match es
+    ['() '()]
+    [(cons a rest) (cons (parse-e a) (parse-list rest))]
+    )
+)
 
 ;; Id S-Expr -> Expr
 (define (parse-apply f es)

@@ -29,11 +29,12 @@ int main(int argc, char** argv)
 
   val_t result;
 
-  result = entry(heap);
-
-  print_result(result);
-  if (val_typeof(result) != T_VOID)
-    putchar('\n');
+  val_vect_t *result = entry(heap);
+  for (int i = 0; i < result->len; ++i) {
+    print_result(result->elems[i]);
+    if (val_typeof(result->elems[i]) != T_VOID)
+      putchar('\n');
+  }
 
   free(heap);
   return 0;

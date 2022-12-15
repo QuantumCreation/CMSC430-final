@@ -7,6 +7,12 @@
 (define rbx 'rbx) ; heap
 (define rsp 'rsp) ; stack
 (define rdi 'rdi) ; arg
+(define r11 'r11) ; Return Values Count
+(define r12 'r12) ; Whatever ;)
+(define r13 'r13) ; arity
+(define r14 'r14) ; arity
+(define r15 'r15) ; arity
+
 
 ;; type CEnv = [Listof Variable]
 
@@ -19,11 +25,101 @@
            (Label 'entry)
            (Mov rbx rdi) ; recv heap pointer
            (compile-e e '())
+
+            ; (Mov r8 1)
+            ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
+            (Cmp r11 2)
+            (Jg 'raise_error_align)
+            (create-vector)
+            ; (Mov r8 r11)
+            ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
+
+            ; (Pop rax)
+            ; (Mov (Offset rbx (* 4 8)) rax)  ; write size of vector, 1
+            ; (Pop rax)
+            ; (Mov (Offset rbx (* 3 8)) rax)  ; write size of vector, 1
+            ; (Pop rax)
+            ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
+            ; (Pop rax)
+            ; (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
+
+
+            ; (Mov rax rbx) ; return the pointer to the vector
+
            (Ret)
            (compile-defines ds)
            (Label 'raise_error_align)
            (Or rsp 8)
            (Jmp 'raise_error))]))
+
+
+(define (compile-mult-r11-rax)
+
+(let (  (l1 (gensym 'mult))
+        (l2 (gensym 'mult)))
+  (seq  (Mov rax 0)
+
+
+        (Label l1)
+        (Cmp r11 0)
+        (Jle l2)
+        (Add rax 8)
+        (Sub r11 1)
+        (Jmp l1)
+
+        (Label l2)
+  )
+)
+
+)
+
+(define (create-vector)
+  (let ((l1 (gensym 'vector))
+      (l2 (gensym 'vector))
+      (l3 (gensym 'vector)))
+    (seq 
+      ; If we have no values being returned, go to the end immediately
+      (Cmp r11 0)
+      (Jle l3)
+
+      ; Saves the last value that was calculated to the stack
+      (Push rax)
+
+      ; Move the r11 registor holding the number of return values to r8
+      (Mov r8 r11)
+      (Mov (Offset rbx 0) r8)  ; write size of vector, 1
+
+      (compile-mult-r11-rax) ;r11 is now multiplied by 8 at placed into rax
+      (Add rbx rax) ; Move the multiplied number to rbx on the heap
+
+      ; If we have no values being returned, go to the end immediately
+      (Cmp r8 0)
+      (Jle l2)
+      
+      ; Loop start
+      (Label l1)
+      ; Get the value from the stack
+      (Pop rax)
+      ; Write the value to the vector
+      (Mov (Offset rbx 0) rax) ; write rax as single element of vector()
+
+      
+      ; Move the rbx  pointer down and count down the number of return values
+      (Sub rbx 8)
+      (Sub r8 1)
+      ;If we are out of return values, keep going to the end
+      (Cmp r8 0)
+      (Jg l1)
+      (Jmp l2)
+
+      (Label l3)
+
+
+      
+      (Label l2)
+      (Mov rax rbx) ; return the pointer to the vector
+    ))
+)
 
 (define (externs)
   (seq (Extern 'peek_byte)
@@ -48,38 +144,219 @@
 ;; Id Fun -> Asm
 (define (compile-fun f fun)
   (match fun
-    [(FunPlain xs e)
+    [(FunPlain xs e) 
+    ; (display "FUNPLAIN")
+
      (seq (Label (symbol->label f))
           ;; TODO: check arity
+          (Cmp r12 (imm->bits (length xs)))
+          (Jne 'raise_error_align)
+          
           (compile-e e (reverse xs))
           (Add rsp (* 8 (length xs)))
+          
           (Ret))]
-    ;; TODO: handle other kinds of functions
+    ; TODO: handle other kinds of functions
+    [(FunRest xs lst e)
+    ; (display "\n")
+    ; (display xs)
+    ; (display "\n")
+      (let ((l1 (gensym 'funrest))
+            (l2 (gensym 'funrest)))
+      (seq (Label (symbol->label f))
+          ;; TODO: check arity
+
+          ; If we have too few arguments, raise error
+          (Cmp r12 (imm->bits (length xs)))
+          (Jl 'raise_error_align)
+
+          ; Add default empty list
+          (Mov rax val-empty)
+
+          ; ; Pop off arguments until we only have the original arguments, no list
+          (Label l1)
+          (Cmp r12 (imm->bits (length xs)))
+
+          ; If we already popped the required arguments and made the list, continue, else do more
+          (Je l2)
+          ; tell us that we have one less argument since we added it to the list
+          (Sub r12 (imm->bits 1))
+
+          ; Take the previous list currently in rax as the first arg (second within the cons expression)
+          (compile-op2 'cons)
+
+          (Jmp l1)
+
+          ; Push the list and do other necessary stuff
+          (Label l2)
+          (Push rax)
+          (compile-e e (cons lst (reverse xs)))
+          (Add rsp (* 8 (+ 1 (length xs))))
+          (Ret)))
+    ]
+    [(FunCase cs) 
+    ; (display "\n") 
+
+    ; (display "\n")
+    (let ((l1 (gensym 'funcase)))
+      (seq  (Label (symbol->label f))
+
+            ; Error if no arguments are provided (THIS IS WRONG AND SHOULD BE CHANGED LATER)
+            ; (Cmp 'r13 (imm->bits 0))
+            ; (Je 'raise_error_align)
+            
+            (Jmp l1)
+            (compile-funcase-define f cs 1)
+
+            (Label l1)
+            (compile-funcase-call f cs 1)
+
+            (Ret)
+      )
+      )
+    ]
     [_
      (seq)]))
 
 
+(define (compile-funcase-call func cs count)
+    (let ((func-name 
+                  (symbol->label 
+                      (string->symbol 
+                          (string-append 
+                                (symbol->string func) (number->string count))))))
+      (match cs
+        ['() (seq (Jmp 'raise_error_align))]
+        [(cons (FunPlain xs e) rest) 
+            (let ((l1 (gensym 'funcase-call)))
+                (seq  
+                      (Cmp r12 (imm->bits (length xs)))
+                      (Je func-name)
+                      (compile-funcase-call func rest (+ count 1))
+                )
+            )
+        ]
+        [(cons (FunRest xs lst e) rest) 
+        (let ((l1 (gensym 'funcase-call)))
+                (seq  
+                      (Cmp r12 (imm->bits (length xs)))
+                      (Jge func-name)
+                      (compile-funcase-call func rest (+ count 1))
+                )
+            )
+        ]
+        ; I DONT BELIEVE THIS CASE CAN EVEN BE REACHED. I KEPT IT ANYWAY
+        ; [(cons (FunCase cs) rest) 
+        ; (let ((l1 (gensym 'funcase-call)))
+        ;         (seq  
+        ;               (Jmp func-name)
+        ;               (compile-funcase-call func rest (+ count 1))
+        ;         )
+        ;     )]
+        [_ (seq (Jmp 'raise_error_align))]
+      )
+  )
+)
 
+
+(define (compile-funcase-define func cs count)
+  (let ((func-name 
+                  ; (symbol->label 
+                      (string->symbol 
+                          (string-append 
+                                (symbol->string func) (number->string count)))))
+                                  ; )
+      (match cs
+        ['() (seq)]
+        [(cons (FunPlain xs e) rest) 
+                (seq  
+                      (compile-fun func-name (FunPlain xs e))
+                      (compile-funcase-define func rest (+ 1 count))
+                )
+        ]
+        [(cons (FunRest xs lst e) rest) 
+                (seq  
+                      (compile-fun func-name (FunRest xs lst e))
+                      (compile-funcase-define func rest (+ 1 count))
+                )
+        ]
+        [(cons (FunCase cs) rest) 
+                (seq  
+                      (compile-fun func-name (FunCase cs))
+                      (compile-funcase-define func rest (+ 1 count))
+                )]
+        [_ (display "ERROR WAS HERE") (seq (Jmp 'raise_error_align))]
+      )
+  )
+)
 
 ;; Expr CEnv -> Asm
 (define (compile-e e c)
+; (display e)
+
   (match e
-    [(Int i)            (compile-value i)]
-    [(Bool b)           (compile-value b)]
-    [(Char c)           (compile-value c)]
-    [(Eof)              (compile-value eof)]
-    [(Empty)            (compile-value '())]
-    [(Var x)            (compile-variable x c)]
-    [(Str s)            (compile-string s)]
-    [(Prim0 p)          (compile-prim0 p c)]
-    [(Prim1 p e)        (compile-prim1 p e c)]
-    [(Prim2 p e1 e2)    (compile-prim2 p e1 e2 c)]
-    [(Prim3 p e1 e2 e3) (compile-prim3 p e1 e2 e3 c)]
-    [(If e1 e2 e3)      (compile-if e1 e2 e3 c)]
-    [(Begin e1 e2)      (compile-begin e1 e2 c)]
-    [(Let x e1 e2)      (compile-let x e1 e2 c)]
-    [(App f es)         (compile-app f es c)]
-    [(Apply f es e)     (compile-apply f es e c)]))
+    [(Int i)            (seq (Mov r11 1) (compile-value i)) ]
+    [(Bool b)           (seq (Mov r11 1) (compile-value b)) ]
+    [(Char c)           (seq (Mov r11 1) (compile-value c)) ]
+    [(Eof)              (seq (Mov r11 1) (compile-value eof)) ]
+    [(Empty)            (seq (Mov r11 1) (compile-value '())) ]
+    [(Var x)            (seq (Mov r11 1) (compile-variable x c)) ]
+    [(Str s)            (seq (Mov r11 1) (compile-string s)) ]
+    [(Prim0 p)          (seq (Mov r11 1) (compile-prim0 p c)) ]
+    [(Prim1 p e)        (seq (Mov r11 1) (compile-prim1 p e c)) ]
+    [(Prim2 p e1 e2)    (seq (Mov r11 1) (compile-prim2 p e1 e2 c)) ]
+    [(Prim3 p e1 e2 e3) (seq (Mov r11 1) (compile-prim3 p e1 e2 e3 c)) ]
+    [(If e1 e2 e3)      (seq (Mov r11 1) (compile-if e1 e2 e3 c)) ]
+    [(Begin e1 e2)      (seq (Mov r11 1) (compile-begin e1 e2 c)) ]
+    [(Let x e1 e2)      (seq (Mov r11 1) (compile-let x e1 e2 c)) ]
+
+    [(Values vs)        (seq (Mov r11 0) (compile-values-first vs c)) ]
+
+    [(App f es)         (seq (Mov r11 2) (compile-app f es c)) ]
+    [(Apply f es e)     (seq (Mov r11 1) (compile-apply f es e c)) ]))
+
+
+
+(define (compile-values-first vs c)
+(match vs
+['() '()]
+[stuff  (seq 
+          (Mov r11 0)
+          (compile-values stuff c))]
+)
+)
+
+
+(define (compile-values vs c)
+(match vs
+['() (seq (Mov r11 0))]
+; Dont push when theres only the last value left. This makes (values 1) act as just 1
+; and it prevents stack issues later on
+[(cons e '()) (seq 
+                    (compile-e e c)
+                    (Cmp r11 1)
+                    (Jne 'raise_error_align)
+
+
+                    (Mov r11 1)
+                    )]
+[(cons e rest) (seq  
+          
+                    (compile-e e c)
+                    (Cmp r11 1)
+                    (Jne 'raise_error_align)
+                    (Push rax)
+                    
+                    (compile-values rest c)
+                    (Add r11 1)
+                    )]
+
+[_ (seq (Jmp 'raise_error_align))]
+)
+)
+
+
+
 
 ;; Value -> Asm
 (define (compile-value v)
@@ -171,13 +448,93 @@
          (Push rax)
          (compile-es es (cons #f c))
          ;; TODO: communicate argument count to called function
+         (Mov r12 (imm->bits (length es)))
+
          (Jmp (symbol->label f))
+         (Jmp 'raise_error_align)
          (Label r))))
+
+
+
+(define (add-env-padding c count)
+  (match count
+    [0 c]
+    [x (cons #f (add-env-padding c (- count 1)))]
+  )
+)
+
 
 ;; Id [Listof Expr] Expr CEnv -> Asm
 (define (compile-apply f es e c)
   ;; TODO: implement apply
-  (seq))
+
+  (let ((r (gensym 'ret))
+        (start (gensym 'apply))
+        (end (gensym 'apply))
+        (addval (gensym 'apply)))
+    (seq 
+        (Lea rax r)
+        (Push rax)
+         
+        ; TODO: communicate argument count to called function
+        
+        (compile-es es (cons #f c))
+        (compile-e e (add-env-padding c (+ 1 (length es))))
+        (Mov r13 rax)
+        ; Arity
+        (Mov r12 (imm->bits (length es)))
+
+        ; Raise error if the initial input is not a list
+        (compile-op1 'cons?)
+        (Cmp rax val-true)
+        (Mov rax r13)
+        (Je start)
+        (Cmp rax val-empty)
+        (Jne 'raise_error_align)
+        (Je end)
+        
+
+        ; Start of the loop
+        (Label start)
+        
+        ; Check if rax is a list
+        ; If rax is a list, car and cdr, else just add the value
+        (compile-op1 'cons?)
+        (Cmp rax val-true)
+        (Mov rax r13)
+        (Jne addval)
+
+        ; Get the first value
+        (compile-op1 'car)
+        ; Add the first value to the stack
+        (Push rax)
+
+        ; Increment arity
+        (Add r12 (imm->bits 1))
+
+        ; retrieve the full list
+        (Mov rax r13)
+        ; Add the rest of the values to rax
+        (compile-op1 'cdr)
+        (Mov r13 rax)
+        (Jmp start)
+
+
+        (Label addval)
+        (Cmp rax val-empty)
+        (Je end)
+
+        (Push rax)
+        (Add r12 (imm->bits 1))
+
+
+
+        (Label end)
+        (Jmp (symbol->label f))
+        (Label r)
+        )
+    )
+)
 
 ;; [Listof Expr] CEnv -> Asm
 (define (compile-es es c)

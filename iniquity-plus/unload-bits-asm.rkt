@@ -5,17 +5,20 @@
 
 ; Answer* -> Answer
 (define (unload/free a)
+
   (match a
     ['err 'err]
     [(cons h vs) (begin0 (unload-values vs)
                          (free h))]))
  
 (define (unload-values vs)
+
   (let ((vec (unload-value (bitwise-xor vs type-vect))))
     (apply values (vector->list vec))))
 
 ;; Value* -> Value
 (define (unload-value v)
+
   (match v
     [(? imm-bits?) (bits->value v)]
     [(? box-bits? i)
@@ -24,7 +27,7 @@
      (cons (unload-value (heap-ref (+ i 8)))
            (unload-value (heap-ref i)))]
     ; VALUES ***************************************************************************
-    [(? values-bits? i)
+    [(? values-bits? i) 
      (cons (unload-value (heap-ref (+ i 8)))
            (unload-value (heap-ref i)))]
 
@@ -35,7 +38,7 @@
          (build-vector (heap-ref i)
                        (lambda (j)
                          (unload-value (heap-ref (+ i (* 8 (add1 j))))))))]
-    [(? str-bits? i)
+    [(? str-bits? i) 
      (if (zero? (untag i))
          (string)
          (build-string (heap-ref i)

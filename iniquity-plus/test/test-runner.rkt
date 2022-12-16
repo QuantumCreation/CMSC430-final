@@ -9,9 +9,11 @@
 ; CUSTOM TESTS
 
 
+; (check-equal? (run '(make-vector 1 (make-string 3 #\f))) 7)
 
-(check-equal? (run '(values -1)
-                ) -1)
+(check-equal? (run '(values)) 7)
+; (check-equal? (run '(values (add1 -1) -2 -3)
+                ; ) 33)
 
 ;   (check-equal? (run '(define f (case-lambda 
 ;                          [(a b c d e) (f a b c d)] 
@@ -84,81 +86,81 @@
 
   
 
-  (check-equal? (run '(define (f a b c . xs) xs)
-                     '(f 1 2))
-                'err)
+;   (check-equal? (run '(define (f a b c . xs) xs)
+;                      '(f 1 2))
+;                 'err)
 
-  (check-equal? (run '(define (f a b c . xs) c)
-                     '(f 1 2 3 4 5 6))
-                3)
+;   (check-equal? (run '(define (f a b c . xs) c)
+;                      '(f 1 2 3 4 5 6))
+;                 3)
 
-  (check-equal? (run '(define (f a . xs) a)
-                    '(f (+ (+ 5 3) 1) (+ 1 5) (+ 3 5)))
-              9)
-
-
-  (check-equal? (run
-                 '(define (f x) x)
-                 '(f 5))
-                5)
-
-(check-equal? (run
-                 '(define (f a b) (+ a b))
-                 '(f 5))
-                'err)
-
-(check-equal? (run '(define (f a . xs)
-                        a)
-                     '(f 1 2 3))
-                1)
-
-(check-equal? (run '(define (f a b c . xs)
-                        xs)
-                     '(f 1 2 3 4 5))
-                '(4 5))
-
-(check-equal? (run '(define (f a b c . xs)
-                        (if (empty? xs) #t #f))
-                     '(f 1 2 3))
-                #t)
+;   (check-equal? (run '(define (f a . xs) a)
+;                     '(f (+ (+ 5 3) 1) (+ 1 5) (+ 3 5)))
+;               9)
 
 
-  (check-equal? (run '(define f
-                        (case-lambda
-                          [(a b c d) c]
-                          [(a b) (+ 9 b)]
-                          [(a) a]))
-                     '(f 1 5 3))
-                'err)
+;   (check-equal? (run
+;                  '(define (f x) x)
+;                  '(f 5))
+;                 5)
 
-    (check-equal? (run '(define f
-                        (case-lambda
-                          [(a b c d) c]
-                          [(a b) (+ 9 b)]
-                          [(a) a]))
-                     '(f 1 5 3))
-                'err)
+; (check-equal? (run
+;                  '(define (f a b) (+ a b))
+;                  '(f 5))
+;                 'err)
 
-  (check-equal? (run '(define f
-                        (case-lambda
-                          [(a b c d) c]
-                          [(a b) (+ 52 b)]
-                          [x (car x)]))
-                     '(f 9 5 3))
-                9)
+; (check-equal? (run '(define (f a . xs)
+;                         a)
+;                      '(f 1 2 3))
+;                 1)
+
+; (check-equal? (run '(define (f a b c . xs)
+;                         xs)
+;                      '(f 1 2 3 4 5))
+;                 '(4 5))
+
+; (check-equal? (run '(define (f a b c . xs)
+;                         (if (empty? xs) #t #f))
+;                      '(f 1 2 3))
+;                 #t)
+
+
+;   (check-equal? (run '(define f
+;                         (case-lambda
+;                           [(a b c d) c]
+;                           [(a b) (+ 9 b)]
+;                           [(a) a]))
+;                      '(f 1 5 3))
+;                 'err)
+
+;     (check-equal? (run '(define f
+;                         (case-lambda
+;                           [(a b c d) c]
+;                           [(a b) (+ 9 b)]
+;                           [(a) a]))
+;                      '(f 1 5 3))
+;                 'err)
+
+;   (check-equal? (run '(define f
+;                         (case-lambda
+;                           [(a b c d) c]
+;                           [(a b) (+ 52 b)]
+;                           [x (car x)]))
+;                      '(f 9 5 3))
+;                 9)
   
-  (check-equal? (run '(define (f a b . xs) xs)
-                     '(apply f 1 2 (cons 3 (cons 4 (cons 5 '())))))
-                '(3 4 5))
+;   (check-equal? (run '(define (f a b . xs) xs)
+;                      '(apply f 1 2 (cons 3 (cons 4 (cons 5 '())))))
+;                 '(3 4 5))
 
 
-  (check-equal? (run '(define (f a . xs) a)
-                     '(apply f 1 2 (cons 3 4)))
-                1)
+;   (check-equal? (run '(define (f a . xs) a)
+;                      '(apply f 1 2 (cons 3 4)))
+;                 1)
 
 
-   (check-equal? (run '(cons? (cons (cons 5 6) (cons 2 3))))
-                #t)
+;    (check-equal? (run '(cons? (cons (cons 5 6) (cons 2 3))))
+;                 #t)
 
 
   ; ;; Abscond examples
@@ -262,41 +264,41 @@
   ;               3)
 
   ; ;; Hoax examples
-  (check-equal? (run '(make-vector 0 0)) #())
-  (check-equal? (run '(make-vector 1 0)) #(0))
-  (check-equal? (run '(make-vector 3 0)) #(0 0 0))
-  (check-equal? (run '(make-vector 3 5)) #(5 5 5))
-  (check-equal? (run '(vector? (make-vector 0 0))) #t)
-  (check-equal? (run '(vector? (cons 0 0))) #f)
-  (check-equal? (run '(vector-ref (make-vector 3 5) -1)) 'err)
-  (check-equal? (run '(vector-ref (make-vector 3 5) 0)) 5)
-  (check-equal? (run '(vector-ref (make-vector 3 5) 1)) 5)
-  (check-equal? (run '(vector-ref (make-vector 3 5) 2)) 5)
-  (check-equal? (run '(vector-ref (make-vector 3 5) 3)) 'err)
-  (check-equal? (run '(let ((x (make-vector 3 5)))
-                        (begin (vector-set! x 0 4)
-                               x)))
-                #(4 5 5))
-  (check-equal? (run '(let ((x (make-vector 3 5)))
-                        (begin (vector-set! x 1 4)
-                               x)))
-                #(5 4 5))
-  (check-equal? (run '(vector-length (make-vector 3 #f))) 3)
-  (check-equal? (run '(vector-length (make-vector 0 #f))) 0)
-  (check-equal? (run '"") "")
-  (check-equal? (run '"fred") "fred")
-  (check-equal? (run '"wilma") "wilma")
-  (check-equal? (run '(make-string 0 #\f)) "")
+  ; (check-equal? (run '(make-vector 0 0)) #())
+  ; (check-equal? (run '(make-vector 1 0)) #(0))
+  ; (check-equal? (run '(make-vector 3 0)) #(0 0 0))
+  ; (check-equal? (run '(make-vector 3 5)) #(5 5 5))
+  ; (check-equal? (run '(vector? (make-vector 0 0))) #t)
+  ; (check-equal? (run '(vector? (cons 0 0))) #f)
+  ; (check-equal? (run '(vector-ref (make-vector 3 5) -1)) 'err)
+  ; (check-equal? (run '(vector-ref (make-vector 3 5) 0)) 5)
+  ; (check-equal? (run '(vector-ref (make-vector 3 5) 1)) 5)
+  ; (check-equal? (run '(vector-ref (make-vector 3 5) 2)) 5)
+  ; (check-equal? (run '(vector-ref (make-vector 3 5) 3)) 'err)
+  ; (check-equal? (run '(let ((x (make-vector 3 5)))
+  ;                       (begin (vector-set! x 0 4)
+  ;                              x)))
+  ;               #(4 5 5))
+  ; (check-equal? (run '(let ((x (make-vector 3 5)))
+  ;                       (begin (vector-set! x 1 4)
+  ;                              x)))
+  ;               #(5 4 5))
+  ; (check-equal? (run '(vector-length (make-vector 3 #f))) 3)
+  ; (check-equal? (run '(vector-length (make-vector 0 #f))) 0)
+  ; (check-equal? (run '"") "")
+  ; (check-equal? (run '"fred") "fred")
+  ; (check-equal? (run '"wilma") "wilma")
+  ; (check-equal? (run '(make-string 0 #\f)) "")
   ; (check-equal? (run '(make-string 3 #\f)) "fff")
   ; (check-equal? (run '(make-string 3 #\g)) "ggg")
   ; (check-equal? (run '(string-length "")) 0)
   ; (check-equal? (run '(string-length "fred")) 4)
-  ; (check-equal? (run '(string-ref "fred" 0)) #\f)
-  ; (check-equal? (run '(string-ref "fred" 1)) #\r)
-  ; (check-equal? (run '(string-ref "fred" 2)) #\e)
-  ; (check-equal? (run '(string-ref "fred" 4)) 'err)
-  ; (check-equal? (run '(string? "fred")) #t)
-  ; (check-equal? (run '(string? (cons 1 2))) #f)
+;   (check-equal? (run '(string-ref "fred" 0)) #\f)
+;   (check-equal? (run '(string-ref "fred" 1)) #\r)
+;   (check-equal? (run '(string-ref "fred" 2)) #\e)
+;   (check-equal? (run '(string-ref "fred" 4)) 'err)
+;   (check-equal? (run '(string? "fred")) #t)
+;   (check-equal? (run '(string? (cons 1 2))) #f)
 
 ;   ;; Iniquity tests
 ;   (check-equal? (run
@@ -332,7 +334,7 @@
 ;                  '(map-add1 (cons 1 (cons 2 (cons 3 '())))))
 ;                 '(2 3 4))
 
-;   ;; Iniquity+
+;   ; Iniquity+
 ;   (check-equal? (run '(define (f x) x)
 ;                      '(f))
 ;                 'err)
@@ -411,7 +413,7 @@
 ;                 '(() 2 (3)))
 
 
-; ; CUSTOM TEST
+; ; ; CUSTOM TEST
 
 
 ;    (check-equal? (run '(define (f a . xs) xs)
@@ -571,104 +573,104 @@
 
 
 ; ; CUSTOM
-;   (check-equal? (run "" '(= 65 (char->integer #\A)))
-;             '(2 3))
+  ; (check-equal? (run "" '(= 65 (char->integer #\A)))
+  ;           '(2 3))
 
 
-     ; (check-equal? (run "f" '(write-byte (read-byte))) (cons 123 ""))
+  ;    (check-equal? (run "f" '(write-byte (read-byte))) (cons 123 ""))
 
 
 
-  ; Evildoer examples
-;   (check-equal? (run "" 7) (cons 7 ""))
-;   (check-equal? (run "" '(write-byte 97)) (cons (void) "a"))
-;   (check-equal? (run "a" '(read-byte)) (cons 97 ""))
-;   (check-equal? (run "b" '(begin (write-byte 97) (read-byte)))
-;                 (cons 98 "a"))
-;   (check-equal? (run "" '(read-byte)) (cons eof ""))
-;   (check-equal? (run "" '(eof-object? (read-byte))) (cons #t ""))
-;   (check-equal? (run "a" '(eof-object? (read-byte))) (cons #f ""))
-;   (check-equal? (run "" '(begin (write-byte 97) (write-byte 98)))
-;                 (cons (void) "ab"))
+  ; ; Evildoer examples
+  ; (check-equal? (run "" 7) (cons 7 ""))
+  ; (check-equal? (run "" '(write-byte 97)) (cons (void) "a"))
+  ; (check-equal? (run "a" '(read-byte)) (cons 97 ""))
+  ; (check-equal? (run "b" '(begin (write-byte 97) (read-byte)))
+  ;               (cons 98 "a"))
+  ; (check-equal? (run "" '(read-byte)) (cons eof ""))
+  ; (check-equal? (run "" '(eof-object? (read-byte))) (cons #t ""))
+  ; (check-equal? (run "a" '(eof-object? (read-byte))) (cons #f ""))
+  ; (check-equal? (run "" '(begin (write-byte 97) (write-byte 98)))
+  ;               (cons (void) "ab"))
 
-;   (check-equal? (run "ab" '(peek-byte)) (cons 97 ""))
-;   (check-equal? (run "ab" '(begin (peek-byte) (read-byte))) (cons 97 ""))
-;   ;; Extort examples
-;   (check-equal? (run "" '(write-byte #t)) (cons 'err ""))
+  ; (check-equal? (run "ab" '(peek-byte)) (cons 97 ""))
+  ; (check-equal? (run "ab" '(begin (peek-byte) (read-byte))) (cons 97 ""))
+  ; ;; Extort examples
+  ; (check-equal? (run "" '(write-byte #t)) (cons 'err ""))
 
-;   ;; Fraud examples
-;   (check-equal? (run "" '(let ((x 97)) (write-byte x))) (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(let ((x 97))
-;                         (begin (write-byte x)
-;                                x)))
-;                 (cons 97 "a"))
-;   (check-equal? (run "b" '(let ((x 97)) (begin (read-byte) x)))
-;                 (cons 97 ""))
-;   (check-equal? (run "b" '(let ((x 97)) (begin (peek-byte) x)))
-;                 (cons 97 ""))
+  ; ;; Fraud examples
+  ; (check-equal? (run "" '(let ((x 97)) (write-byte x))) (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(let ((x 97))
+  ;                       (begin (write-byte x)
+  ;                              x)))
+  ;               (cons 97 "a"))
+  ; (check-equal? (run "b" '(let ((x 97)) (begin (read-byte) x)))
+  ;               (cons 97 ""))
+  ; (check-equal? (run "b" '(let ((x 97)) (begin (peek-byte) x)))
+  ;               (cons 97 ""))
 
-;   ;; Hustle examples
-;   (check-equal? (run ""
-;                      '(let ((x 1))
-;                         (begin (write-byte 97)
-;                                1)))
-;                 (cons 1 "a"))
+  ; ;; Hustle examples
+  ; (check-equal? (run ""
+  ;                    '(let ((x 1))
+  ;                       (begin (write-byte 97)
+  ;                              1)))
+  ;               (cons 1 "a"))
 
-;   (check-equal? (run ""
-;                      '(let ((x 1))
-;                         (let ((y 2))
-;                           (begin (write-byte 97)
-;                                  1))))
-;                 (cons 1 "a"))
+  ; (check-equal? (run ""
+  ;                    '(let ((x 1))
+  ;                       (let ((y 2))
+  ;                         (begin (write-byte 97)
+  ;                                1))))
+  ;               (cons 1 "a"))
 
-;   (check-equal? (run ""
-;                      '(let ((x (cons 1 2)))
-;                         (begin (write-byte 97)
-;                                (car x))))
-;                 (cons 1 "a"))
-;   ;; Iniquity examples
-;   (check-equal? (run ""
-;                      '(define (print-alphabet i)
-;                         (if (zero? i)
-;                             (void)
-;                             (begin (write-byte (- 123 i))
-;                                    (print-alphabet (sub1 i)))))
-;                      '(print-alphabet 26))
-;                 (cons (void) "abcdefghijklmnopqrstuvwxyz"))
+  ; (check-equal? (run ""
+  ;                    '(let ((x (cons 1 2)))
+  ;                       (begin (write-byte 97)
+  ;                              (car x))))
+  ;               (cons 1 "a"))
+  ; ;; Iniquity examples
+  ; (check-equal? (run ""
+  ;                    '(define (print-alphabet i)
+  ;                       (if (zero? i)
+  ;                           (void)
+  ;                           (begin (write-byte (- 123 i))
+  ;                                  (print-alphabet (sub1 i)))))
+  ;                    '(print-alphabet 26))
+  ;               (cons (void) "abcdefghijklmnopqrstuvwxyz"))
 
-;   (check-equal? (run ""
-;                      '(define (f x)
-;                         (write-byte x))
-;                      '(f 97))
-;                 (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(define (f x y)
-;                         (write-byte x))
-;                      '(f 97 98))
-;                 (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(define (f x)
-;                         (let ((y x))
-;                           (write-byte y)))
-;                      '(f 97))
-;                 (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(define (f x y)
-;                         (let ((y x))
-;                           (write-byte y)))
-;                      '(f 97 98))
-;                 (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(define (f x)
-;                         (write-byte x))
-;                      '(let ((z 97))
-;                         (f z)))
-;                 (cons (void) "a"))
-;   (check-equal? (run ""
-;                      '(define (f x y)
-;                         (write-byte x))
-;                      '(let ((z 97))
-;                         (f z 98)))
-;                 (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x)
+  ;                       (write-byte x))
+  ;                    '(f 97))
+  ;               (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x y)
+  ;                       (write-byte x))
+  ;                    '(f 97 98))
+  ;               (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x)
+  ;                       (let ((y x))
+  ;                         (write-byte y)))
+  ;                    '(f 97))
+  ;               (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x y)
+  ;                       (let ((y x))
+  ;                         (write-byte y)))
+  ;                    '(f 97 98))
+  ;               (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x)
+  ;                       (write-byte x))
+  ;                    '(let ((z 97))
+  ;                       (f z)))
+  ;               (cons (void) "a"))
+  ; (check-equal? (run ""
+  ;                    '(define (f x y)
+  ;                       (write-byte x))
+  ;                    '(let ((z 97))
+  ;                       (f z 98)))
+  ;               (cons (void) "a"))
 )

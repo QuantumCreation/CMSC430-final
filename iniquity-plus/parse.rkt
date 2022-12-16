@@ -86,8 +86,11 @@
      (Let x (parse-e e1) (parse-e e2))]
     [(list-rest 'apply (? symbol? f) es)
      (parse-apply f es)]
+
+
+  ; HERE IS WHERE I EDITED THINGS
     [(cons 'values es)
-    (Values (parse-list es))
+      (Values (parse-list es))
     ]
     [(list 'let-values es e)
     (LetValues (parse-let-values es) (parse-e e))
@@ -100,8 +103,9 @@
 
 (define (parse-let-values es)
     (match es
-    ['() '()]
-    [(cons (list vars vals) rest) (cons (list (parse-list vars) (parse-e vals)) (parse-let-values rest))]
+      ['() '()]
+      [(cons (list vars vals) rest) (cons (list (parse-list-vars vars) (parse-e vals)) (parse-let-values rest))]
+      [_ (error "Parse error")]
     )
 )
 
@@ -109,6 +113,15 @@
     (match es
     ['() '()]
     [(cons a rest) (cons (parse-e a) (parse-list rest))]
+    [_ (error "Parse error")]
+    )
+)
+
+(define (parse-list-vars es)
+    (match es
+    ['() '()]
+    [(cons (? symbol? a) rest) (cons (parse-e a) (parse-list-vars rest))]
+    [_ (error "Parse error" es)]
     )
 )
 

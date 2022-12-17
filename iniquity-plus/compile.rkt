@@ -11,7 +11,7 @@
 (define r12 'r12) ; arity
 (define r13 'r13) ; arity
 (define r14 'r14) ; Scratch for Creating Vectors
-(define r15 'r15) ; arity
+(define r15 'r15) ; Stack Pad
 
 
 ;; type CEnv = [Listof Variable]
@@ -24,11 +24,21 @@
            (Global 'entry)
            (Label 'entry)
            (Mov rbx rdi) ; recv heap pointer
-           (compile-e e '())
-
 
             
 
+
+            ; (Push r12)
+            ; (Push r13)
+            ; (Push r14)
+            ; (Push r15)
+            
+           (compile-e e '())
+            
+          ; (Mov r8 1)
+          ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
+          ; (Mov (Offset rbx 8) rax) ; write rax as single element of vector
+          ; (Mov rax rbx)            ; return the pointer to the vector
             ; (Mov rax (imm->bits 69))
             ; (Push rax)
             
@@ -61,25 +71,15 @@
             ; (compile-op1 'cdr-values)
             ; (compile-op1 'car-values)
             ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
-          
-            ; (Cmp r11 2)
-            ; (Jg 'raise_error_align)
-            ; (Cmp r11 1)
-            ; (Je 'raise_error_align)
+            ; (Mov r11 1)
             (create-vector)
-            ; (Mov r8 r11)
-            ; (Mov (Offset rbx 0) r8)  ; write size of vector, 1
 
-            ; (Pop rax)
-            ; (Mov (Offset rbx (* 4 8)) rax)  ; write size of vector, 1
-            ; (Pop rax)
-            ; (Mov (Offset rbx (* 3 8)) rax)  ; write size of vector, 1
-            ; (Pop rax)
-            ; (Mov (Offset rbx (* 2 8)) rax)  ; write size of vector, 1
-            ; (Pop rax)
-            ; (Mov (Offset rbx (* 1 8)) rax)  ; write size of vector, 1
-        
+            
             (Mov rax rbx) ; return the pointer to the vector
+            ; (Pop r15)
+            ; (Pop r14)
+            ; (Pop r13)
+            ; (Pop r12)
 
            (Ret)
            (compile-defines ds)
@@ -112,24 +112,24 @@
 
 (define (countdown-rbx-by-r11)
 
-(let (  (l1 (gensym 'countdown))
-        (l2 (gensym 'countdown)))
-  (seq  
-  
-        (Mov rax r11)
+  (let (  (l1 (gensym 'countdown))
+          (l2 (gensym 'countdown)))
+    (seq  
+    
+          (Mov rax r11)
 
-        ; Start loop
-        (Label l1)
-        (Cmp rax 0)
-        (Jle l2)
+          ; Start loop
+          (Label l1)
+          (Cmp rax 0)
+          (Jle l2)
 
-        (Sub rbx 8)
-        (Sub rax 1)
-        (Jmp l1)
+          (Sub rbx 8)
+          (Sub rax 1)
+          (Jmp l1)
 
-        (Label l2)
+          (Label l2)
+    )
   )
-)
 )
 
 ; Beware of bashing on r8
@@ -152,7 +152,6 @@
       ; ; Saves the last value that was calculated to the stack
       ; (Push rax)
 
-      
      
       ; If we only have one value, add just that one value
       (Cmp r11 1)
@@ -240,12 +239,9 @@
           (Ret))]
     ; TODO: handle other kinds of functions
     [(FunRest xs lst e)
-    ; (display "\n")
-    ; (display xs)
-    ; (display "\n")
       (let ((l1 (gensym 'funrest))
             (l2 (gensym 'funrest)))
-      (seq (Label (symbol->label f))
+        (seq (Label (symbol->label f))
           ;; TODO: check arity
 
           ; If we have too few arguments, raise error
@@ -277,25 +273,22 @@
           (Ret)))
     ]
     [(FunCase cs) 
-    ; (display "\n") 
+      (let ((l1 (gensym 'funcase)))
+        (seq  (Label (symbol->label f))
 
-    ; (display "\n")
-    (let ((l1 (gensym 'funcase)))
-      (seq  (Label (symbol->label f))
+              ; Error if no arguments are provided (THIS IS WRONG AND SHOULD BE CHANGED LATER)
+              ; (Cmp 'r13 (imm->bits 0))
+              ; (Je 'raise_error_align)
+              
+              (Jmp l1)
+              (compile-funcase-define f cs 1)
 
-            ; Error if no arguments are provided (THIS IS WRONG AND SHOULD BE CHANGED LATER)
-            ; (Cmp 'r13 (imm->bits 0))
-            ; (Je 'raise_error_align)
-            
-            (Jmp l1)
-            (compile-funcase-define f cs 1)
+              (Label l1)
+              (compile-funcase-call f cs 1)
 
-            (Label l1)
-            (compile-funcase-call f cs 1)
-
-            (Ret)
-      )
-      )
+              (Ret)
+          )
+        )
     ]
     [_
      (seq)]))
@@ -339,8 +332,6 @@
       )
   )
 )
-
-
 (define (compile-funcase-define func cs count)
   (let ((func-name 
                   ; (symbol->label 
@@ -374,7 +365,7 @@
 
 
 (define (check-number-of-return-values)
-(let ((l1 (gensym 'check)))
+  (let ((l1 (gensym 'check)))
       (seq (Cmp r11 1)
             (Jne 'raise_error_align))
   )
@@ -387,28 +378,100 @@
 (define (compile-e e c)
 ; (display e)
 ; Maybe check for multiple return values inside here?
+; CURRENT WAY TO CHECK NUMBER OF RETURN VALUES IS WRONG
   (match e
-    [(Int i)            (seq (Mov r11 1) (compile-value i) (check-number-of-return-values)) ]
-    [(Bool b)           (seq (Mov r11 1) (compile-value b) (check-number-of-return-values)) ]
-    [(Char c)           (seq (Mov r11 1) (compile-value c) (check-number-of-return-values)) ]
-    [(Eof)              (seq (Mov r11 1) (compile-value eof) (check-number-of-return-values)) ]
-    [(Empty)            (seq (Mov r11 1) (compile-value '()) (check-number-of-return-values)) ]
-    [(Var x)            (seq (Mov r11 1) (compile-variable x c) (check-number-of-return-values)) ]
-    [(Str s)            (seq (Mov r11 1) (compile-string s) (check-number-of-return-values)) ]
-    [(Prim0 p)          (seq (Mov r11 1) (compile-prim0 p c) (check-number-of-return-values)) ]
-    [(Prim1 p e)        (seq (Mov r11 1) (compile-prim1 p e c) (check-number-of-return-values)) ]
-    [(Prim2 p e1 e2)    (seq (Mov r11 1) (compile-prim2 p e1 e2 c) (check-number-of-return-values)) ]
-    [(Prim3 p e1 e2 e3) (seq (Mov r11 1) (compile-prim3 p e1 e2 e3 c) (check-number-of-return-values)) ]
-    [(If e1 e2 e3)      (seq (Mov r11 1) (compile-if e1 e2 e3 c) (check-number-of-return-values)) ]
-    [(Begin e1 e2)      (seq (Mov r11 1) (compile-begin e1 e2 c) (check-number-of-return-values)) ]
-    [(Let x e1 e2)      (seq (Mov r11 1) (compile-let x e1 e2 c) (check-number-of-return-values)) ]
+    [(Int i)            (seq (Mov r11 1) (compile-value i)) ]
+    [(Bool b)           (seq (Mov r11 1) (compile-value b) ) ]
+    [(Char c)           (seq (Mov r11 1) (compile-value c)) ]
+    [(Eof)              (seq (Mov r11 1) (compile-value eof)) ]
+    [(Empty)            (seq (Mov r11 1) (compile-value '())) ]
+    [(Var x)            (seq (Mov r11 1) (compile-variable x c)) ]
+    [(Str s)            (seq (Mov r11 1) (compile-string s)) ]
+    [(Prim0 p)          (seq (Mov r11 1) (compile-prim0 p c)) ]
+    [(Prim1 p e)        (seq (Mov r11 1) (compile-prim1 p e c)) ]
+    [(Prim2 p e1 e2)    (seq (Mov r11 1) (compile-prim2 p e1 e2 c)) ]
+    [(Prim3 p e1 e2 e3) (seq (Mov r11 1) (compile-prim3 p e1 e2 e3 c)) ]
+    [(If e1 e2 e3)      (seq (Mov r11 1) (compile-if e1 e2 e3 c)) ]
+    [(Begin e1 e2)      (seq (Mov r11 1) (compile-begin e1 e2 c)) ]
+    [(Let x e1 e2)      (seq (Mov r11 1) (compile-let x e1 e2 c)) ]
 
     [(Values vs)        (seq (Mov r11 0) (compile-values-first vs c)) ]
+    [(LetValues es e1)  (seq (Mov r11 1) (compile-let-values es e1 c '()))]
 
     [(App f es)         (seq (Mov r11 1) (compile-app f es c)) ]
     [(Apply f es e)     (seq (Mov r11 1) (compile-apply f es e c)) ]))
 
+; ;; Id Expr Expr CEnv -> Asm
+; (define (compile-let x e1 e2 c)
+;   (seq (compile-e e1 c)
+;        (Push rax)
+;        (compile-e e2 (cons x c))
+;        (Add rsp 8)))
 
+
+(define (unpack-values count)
+  (match count
+    [0 (seq)]
+    [_ (let ((l1 (gensym 'count))
+              (l2 (gensym 'count)))
+        (seq  
+              (Push rax)
+              (compile-op1 'values?)
+              (Cmp rax val-true)
+              (Jne l1)
+
+              ; If we do have stuff to unpack, grab the top item without popping
+              (Mov rax (Offset rsp 0))
+              ; Grab the first value
+              (compile-op1 'car-values)
+              ; move first value
+              (Mov r8 rax)
+              ; Grab original list
+              (Pop rax)
+              ; Save first value
+              (Push r8)
+              
+              ; Get the rest of the list
+              (compile-op1 'cdr-values)
+              (unpack-values (- count 1))
+              
+              ; If we only have one value that is 
+              (Label l1)
+
+              (Label l2)
+            ))
+    ]
+  )
+  
+)
+
+(define (compile-let-values es e c new_vars)
+  (match es
+    ['() (seq (compile-e e (reverse new_vars))
+              (Add rsp (* 8 (length new_vars)))
+              )]
+    [(cons (list vars vals) rest) 
+              (seq  (compile-e vals c)
+                    (Cmp r11 (length (symbols-from-var-list vars)))
+                    (Jne 'raise_error_align)
+                    
+                    ; Check this stuff later
+                    (unpack-values (length (symbols-from-var-list vars)))
+                    (compile-let-values rest e c (append (symbols-from-var-list vars) new_vars))
+                    
+              )
+    ]
+  )
+)
+
+(define (symbols-from-var-list vars)
+(match vars
+  ['() '()]
+  [(cons (Var x) rest) (cons x (symbols-from-var-list rest))]
+)
+
+
+)
 
 (define (compile-values-first vs c)
   (match vs
@@ -419,17 +482,15 @@
                       (Jne 'raise_error_align)
                       (Mov r11 1)
                       )]
-  [(cons e rest) (seq  
+  [(cons e rest) (seq 
                       (compile-e e c)
                       (Cmp r11 1)
                       (Jne 'raise_error_align)
                       (Push rax)
                       ; (Mov rax val-empty)
                       ; (Push rax)
-                      (compile-values rest c)
-                      
+                      (compile-values rest (cons #f c))
                       (Add r11 1)
-
                       )]
   ; [_ (seq (Jmp 'raise_error_align))]
   )
@@ -437,25 +498,25 @@
 
 
 (define (compile-values vs c)
-(match vs
-['() (seq (Mov r11 0)
-          (Mov rax val-empty)
-          (compile-op2 'values))]
-[(cons e rest) (seq  
-                    (compile-e e c)
-                    (Cmp r11 1)
-                    (Jne 'raise_error_align)
-                    ; (Pop r8)
-                    (Push rax)
-                    ; (Mov rax r8)
-                    ; (Mov rax val-empty)
-                                      
-                    (compile-values rest c)
-                    (compile-op2 'values)
-                    (Add r11 1)
-                    )]
-[_ (seq (Jmp 'raise_error_align))]
-)
+  (match vs
+    ['() (seq (Mov r11 0)
+              (Mov rax val-empty)
+              (compile-op2 'values))]
+    [(cons e rest) (seq  
+                        (compile-e e c)
+                        (Cmp r11 1)
+                        (Jne 'raise_error_align)
+                        ; (Pop r8)
+                        (Push rax)
+                        ; (Mov rax r8)
+                        ; (Mov rax val-empty)
+                                          
+                        (compile-values rest (cons #f c))
+                        (compile-op2 'values)
+                        (Add r11 1)
+                        )]
+    ; [_ (seq (Jmp 'raise_error_align))]
+  )
 )
 
 

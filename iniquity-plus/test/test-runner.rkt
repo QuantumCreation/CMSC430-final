@@ -9,9 +9,24 @@
 ; CUSTOM TESTS
 
 
+; (check-equal? (run '(make-string 3 #\f)) 7)
+; (check-equal? (run '(values 1 2 3)) 7)
 ; (check-equal? (run '(make-vector 1 (make-string 3 #\f))) 7)
 
-(check-equal? (run '(values)) 7)
+; (check-equal? (run '(cons (make-string 5 #\f) (cons (make-string 2 #\f) '()))) 7)
+
+  (check-equal? (run
+                 '(define (f x) x)
+                 '(f 5))
+                5)
+  
+; (check-equal? (run '(let-values ([(a b c d) (values 1 2 3 4)]) (cons a (cons b (cons c (cons d '())))))) 7)
+
+; (check-equal? (run '(let-values ([(a b c d) (values 1 2 3 4)]) (values a b c d))) 7)
+
+
+; (check-equal? (run '(let ([a 3]) (values 1 a a a a))) 7)
+
 ; (check-equal? (run '(values (add1 -1) -2 -3)
                 ; ) 33)
 
@@ -293,12 +308,12 @@
   ; (check-equal? (run '(make-string 3 #\g)) "ggg")
   ; (check-equal? (run '(string-length "")) 0)
   ; (check-equal? (run '(string-length "fred")) 4)
-;   (check-equal? (run '(string-ref "fred" 0)) #\f)
-;   (check-equal? (run '(string-ref "fred" 1)) #\r)
-;   (check-equal? (run '(string-ref "fred" 2)) #\e)
-;   (check-equal? (run '(string-ref "fred" 4)) 'err)
-;   (check-equal? (run '(string? "fred")) #t)
-;   (check-equal? (run '(string? (cons 1 2))) #f)
+  ; (check-equal? (run '(string-ref "fred" 0)) #\f)
+  ; (check-equal? (run '(string-ref "fred" 1)) #\r)
+  ; (check-equal? (run '(string-ref "fred" 2)) #\e)
+  ; (check-equal? (run '(string-ref "fred" 4)) 'err)
+  ; (check-equal? (run '(string? "fred")) #t)
+  ; (check-equal? (run '(string? (cons 1 2))) #f)
 
 ;   ;; Iniquity tests
 ;   (check-equal? (run
@@ -577,13 +592,13 @@
   ;           '(2 3))
 
 
-  ;    (check-equal? (run "f" '(write-byte (read-byte))) (cons 123 ""))
+    ;  (check-equal? (run "f" '(write-byte (read-byte))) (cons 123 ""))
 
 
 
   ; ; Evildoer examples
   ; (check-equal? (run "" 7) (cons 7 ""))
-  ; (check-equal? (run "" '(write-byte 97)) (cons (void) "a"))
+  (check-equal? (run "" '(write-byte 97)) (cons (void) "a"))
   ; (check-equal? (run "a" '(read-byte)) (cons 97 ""))
   ; (check-equal? (run "b" '(begin (write-byte 97) (read-byte)))
   ;               (cons 98 "a"))

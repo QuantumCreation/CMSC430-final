@@ -3,6 +3,16 @@
 (require "types.rkt"
          ffi/unsafe)
 
+
+
+; ; Answer* -> Answer
+; (define (unload/free a)
+;   (match a
+;     ['err 'err]
+;     [(cons h v) (begin0 (unload-value v)
+;                         (free h))]))
+
+
 ; Answer* -> Answer
 (define (unload/free a)
 

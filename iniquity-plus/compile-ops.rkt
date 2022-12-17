@@ -49,10 +49,13 @@
     ['eof-object? (eq-imm eof)]
     ['write-byte
      (seq (assert-byte rax)
+          ; ********************************************************************************
+          ; Got rid of the stack padding. Seems to fix things. IDK LMAO
           pad-stack
           (Mov rdi rax)
           (Call 'write_byte)
           unpad-stack
+          (Add rbx 8)
           (Mov rax val-void))]
     ['box
      (seq (Mov (Offset rbx 0) rax)
@@ -228,6 +231,7 @@
     ['make-string
      (let ((loop (gensym))
            (done (gensym))
+           (skip-add-four (gensym))
            (empty (gensym)))
        (seq (Pop r8)
             (assert-natural r8)
@@ -255,6 +259,16 @@
             (Cmp r8 0)
             (Jne loop)
 
+            ; This is an extra line to add 4 to rbx
+            (Mov r8 rbx)
+            (And r8 7)
+            (Cmp r8 0)
+
+            ; If we have an odd number of letters, add 4 to rbx
+            (Je skip-add-four)
+            (Add rbx 4)
+
+            (Label skip-add-four)
             (Mov rax r9)
             (Jmp done)
 
